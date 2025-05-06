@@ -1,98 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <title>ECharts Stacked Line Chart</title>
-    <!-- Import ECharts library -->
-    <script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国对外开放历程</title>
     <style>
-        #main {
-            width: 800px;
-            height: 500px;
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 40px 20px;
+            color: #333;
+        }
+
+        .timeline-container {
+            max-width: 800px;
             margin: 0 auto;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #007bff, #0056b3);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin: 40px 0;
+            padding: 20px 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .timeline-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .timeline-year {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: #007bff;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,123,255,0.3);
+        }
+
+        .timeline-content {
+            margin-top: 30px;
+        }
+
+        .timeline-title {
+            color: #0056b3;
+            font-size: 1.2em;
+            margin: 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .timeline-desc {
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .timeline-container::before {
+                left: 30px;
+            }
+
+            .timeline-year {
+                left: 30px;
+                transform: none;
+            }
+
+            .timeline-content {
+                margin-left: 70px;
+            }
         }
     </style>
 </head>
 <body>
-<!-- Chart container -->
-<div id="main"></div>
+    <div class="timeline-container">
+        <div class="timeline-item">
+            <div class="timeline-year">2001</div>
+            <div class="timeline-content">
+                <div class="timeline-title">加入世界贸易组织</div>
+                <div class="timeline-desc">中国正式成为WTO第143个成员，标志着我国深度融入全球经济体系，开启对外开放新纪元。</div>
+            </div>
+        </div>
 
-<script>
-    // Initialize the chart
-    var chartDom = document.getElementById('main');
-    var myChart = echarts.init(chartDom);
-    var option;
+        <div class="timeline-item">
+            <div class="timeline-year">2013</div>
+            <div class="timeline-content">
+                <div class="timeline-title">建立自由贸易试验区</div>
+                <div class="timeline-desc">上海自贸试验区挂牌成立，随后扩展至全国11个省市，形成东中西协调发展的开放格局，探索制度创新高地。</div>
+            </div>
+        </div>
 
-    option = {
-        title: {
-            text: 'Stacked Line'
-        },
-        tooltip: {
-            trigger: 'axis'
-        },
-        legend: {
-            data: ['Email', 'Union Ads', 'Video Ads', 'Direct', 'Search Engine']
-        },
-        grid: {
-            left: '3%',
-            right: '4%',
-            bottom: '3%',
-            containLabel: true
-        },
-        toolbox: {
-            feature: {
-                saveAsImage: {}
-            }
-        },
-        xAxis: {
-            type: 'category',
-            boundaryGap: false,
-            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        },
-        yAxis: {
-            type: 'value'
-        },
-        series: [
-            {
-                name: 'Email',
-                type: 'line',
-                stack: 'Total',
-                data: [120, 132, 101, 134, 90, 230, 210]
-            },
-            {
-                name: 'Union Ads',
-                type: 'line',
-                stack: 'Total',
-                data: [220, 182, 191, 234, 290, 330, 310]
-            },
-            {
-                name: 'Video Ads',
-                type: 'line',
-                stack: 'Total',
-                data: [150, 232, 201, 154, 190, 330, 410]
-            },
-            {
-                name: 'Direct',
-                type: 'line',
-                stack: 'Total',
-                data: [320, 332, 301, 334, 390, 330, 320]
-            },
-            {
-                name: 'Search Engine',
-                type: 'line',
-                stack: 'Total',
-                data: [820, 932, 901, 934, 1290, 1330, 1320]
-            }
-        ]
-    };
-
-    // Apply the configuration to the chart
-    option && myChart.setOption(option);
-
-    // Handle window resize to make chart responsive
-    window.addEventListener('resize', function() {
-        myChart.resize();
-    });
-</script>
+        <div class="timeline-item">
+            <div class="timeline-year">2017</div>
+            <div class="timeline-content">
+                <div class="timeline-title">新经济试点试验城市</div>
+                <div class="timeline-desc">党的十九大提出建设现代化经济体系，推动数字经济、共享经济等新业态发展，打造具有全球竞争力的新经济发展高地。</div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
