@@ -1,124 +1,158 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html style="height: 100%">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中国对外开放历程</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f5f7fa;
-            margin: 0;
-            padding: 40px 20px;
-            color: #333;
-        }
-
-        .timeline-container {
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
-            padding: 20px 0;
-        }
-
-        .timeline-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: linear-gradient(to bottom, #007bff, #0056b3);
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .timeline-item {
-            position: relative;
-            margin: 40px 0;
-            padding: 20px 40px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease;
-        }
-
-        .timeline-item:hover {
-            transform: translateY(-5px);
-        }
-
-        .timeline-year {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 50px;
-            background: #007bff;
-            border-radius: 50%;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,123,255,0.3);
-        }
-
-        .timeline-content {
-            margin-top: 30px;
-        }
-
-        .timeline-title {
-            color: #0056b3;
-            font-size: 1.2em;
-            margin: 10px 0;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .timeline-desc {
-            font-size: 0.95em;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 768px) {
-            .timeline-container::before {
-                left: 30px;
-            }
-
-            .timeline-year {
-                left: 30px;
-                transform: none;
-            }
-
-            .timeline-content {
-                margin-left: 70px;
-            }
-        }
-    </style>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
 </head>
-<body>
-    <div class="timeline-container">
-        <div class="timeline-item">
-            <div class="timeline-year">2001</div>
-            <div class="timeline-content">
-                <div class="timeline-title">加入世界贸易组织</div>
-                <div class="timeline-desc">中国正式成为WTO第143个成员，标志着我国深度融入全球经济体系，开启对外开放新纪元。</div>
-            </div>
-        </div>
+<body style="height: 100%; margin: 0">
+    <div id="container" style="height: 100%"></div>
+    <script type="text/javascript">
+        var myChart = echarts.init(document.getElementById('container'));
 
-        <div class="timeline-item">
-            <div class="timeline-year">2013</div>
-            <div class="timeline-content">
-                <div class="timeline-title">建立自由贸易试验区</div>
-                <div class="timeline-desc">上海自贸试验区挂牌成立，随后扩展至全国11个省市，形成东中西协调发展的开放格局，探索制度创新高地。</div>
-            </div>
-        </div>
+        // 定义渐变色
+        var tariffColor = {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+                { offset: 0, color: '#4e79a7' },
+                { offset: 1, color: '#a0c4e4' }
+            ]
+        };
+        var industryColor = {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+                { offset: 0, color: '#f28e2b' },
+                { offset: 1, color: '#fcb897' }
+            ]
+        };
 
-        <div class="timeline-item">
-            <div class="timeline-year">2017</div>
-            <div class="timeline-content">
-                <div class="timeline-title">新经济试点试验城市</div>
-                <div class="timeline-desc">党的十九大提出建设现代化经济体系，推动数字经济、共享经济等新业态发展，打造具有全球竞争力的新经济发展高地。</div>
-            </div>
-        </div>
-    </div>
+        // 数据集
+        var data = {
+            years: ['2001', '2002', '2003', '2004', '2005', '2006'],
+            tariffTotal: [15.3, 12, 11, 10.4, 9.9, 9.9],
+            industryTariff: [14.7, 11.3, 10.3, 9.5, 9, 9]
+        };
+
+        option = {
+            title: {
+                text: '中国关税水平变化趋势（2001-2006）',
+                left: 'center',
+                textStyle: {
+                    fontSize: 20,
+                    fontWeight: 'bold'
+                }
+            },
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                borderColor: '#ccc',
+                textStyle: {
+                    color: '#333'
+                },
+                formatter: function(params) {
+                    return params[0].name + '<br/>' +
+                        '关税总水平：' + params[0].value + '%<br/>' +
+                        '工业品关税：' + params[1].value + '%';
+                }
+            },
+            legend: {
+                data: ['关税总水平', '工业品关税水平'],
+                top: 40,
+                textStyle: {
+                    fontSize: 14
+                }
+            },
+            grid: {
+                left: '10%',
+                right: '10%',
+                bottom: '15%',
+                top: '25%'
+            },
+            xAxis: {
+                type: 'category',
+                data: data.years,
+                axisLine: {
+                    lineStyle: {
+                        color: '#555'
+                    }
+                },
+                axisLabel: {
+                    fontSize: 12
+                }
+            },
+            yAxis: {
+                type: 'value',
+                name: '关税税率 (%)',
+                min: 8,
+                max: 16,
+                interval: 2,
+                axisLine: {
+                    lineStyle: {
+                        color: '#555'
+                    }
+                },
+                splitLine: {
+                    lineStyle: {
+                        type: 'dashed'
+                    }
+                }
+            },
+            series: [
+                {
+                    name: '关税总水平',
+                    type: 'line',
+                    symbol: 'circle',
+                    symbolSize: 8,
+                    itemStyle: { color: tariffColor },
+                    lineStyle: {
+                        width: 3,
+                        shadowColor: 'rgba(76, 148, 255, 0.5)',
+                        shadowBlur: 10
+                    },
+                    data: data.tariffTotal,
+                    emphasis: {
+                        itemStyle: {
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        }
+                    }
+                },
+                {
+                    name: '工业品关税水平',
+                    type: 'line',
+                    symbol: 'rect',
+                    symbolSize: 8,
+                    itemStyle: { color: industryColor },
+                    lineStyle: {
+                        width: 3,
+                        shadowColor: 'rgba(255, 140, 0, 0.5)',
+                        shadowBlur: 10
+                    },
+                    data: data.industryTariff,
+                    emphasis: {
+                        itemStyle: {
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        }
+                    }
+                }
+            ],
+            dataZoom: [{
+                type: 'slider',
+                start: 0,
+                end: 100
+            }],
+            animationType: 'linear',
+            animationDuration: 2000
+        };
+
+        myChart.setOption(option);
+
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    </script>
 </body>
 </html>
