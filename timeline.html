@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px; }
+        .timeline { position: relative; max-width: 1000px; margin: 0 auto; }
+        .timeline::after { content: ''; position: absolute; width: 4px; background: #007BFF; top: 0; bottom: 0; left: 50%; }
+        .event { padding: 20px; width: 50%; position: relative; }
+        .event.left { left: 0; text-align: right; }
+        .event.right { left: 50%; text-align: left; }
+        .dot { height: 20px; width: 20px; background-color: #fff; border: 4px solid; position: absolute; top: 15px; border-radius: 50%; }
+        .left .dot { right: -10px; border-color: #e74c3c; }
+        .right .dot { left: -10px; border-color: #2ecc71; }
+        .content { padding: 10px 20px; background: #fff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="timeline">
+        <!-- 2013年 -->
+        <div class="event left">
+            <div class="dot"></div>
+            <div class="content">
+                <h3>2013年 | 上海自由贸易试验区</h3>
+                <p><strong>特点</strong>：全国首个自贸区，金融改革与贸易便利化。</p>
+                <p><strong>范围</strong>：上海浦东新区（28.78平方公里）。</p>
+                <p><strong>政策</strong>：负面清单（190→139条）、自由贸易账户、跨境服务贸易试点。</p>
+            </div>
+        </div>
+
+        <!-- 2015年 -->
+        <div class="event right">
+            <div class="dot"></div>
+            <div class="content">
+                <h3>2015年 | 广东、天津、福建自贸区</h3>
+                <p><strong>特点</strong>：区域协同开放，对接国家战略。</p>
+                <p><strong>范围</strong>：广东（116.65 km²）、天津（119.9 km²）、福建（118.04 km²）。</p>
+                <p><strong>政策</strong>：负面清单减至122条、“单一窗口”通关、跨境电子商务。</p>
+            </div>
+        </div>
+
+        <!-- 2016年 -->
+        <div class="event left">
+            <div class="dot"></div>
+            <div class="content">
+                <h3>2016年 | 7个自贸区试点</h3>
+                <p><strong>特点</strong>：覆盖中西部与东北，产业特色鲜明。</p>
+                <p><strong>范围</strong>：辽宁、浙江、河南、湖北、重庆、四川、陕西（各约120 km²）。</p>
+                <p><strong>政策</strong>：负面清单减至95条、“证照分离”、自贸+自创双区联动。</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
