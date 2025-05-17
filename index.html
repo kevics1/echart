@@ -9,23 +9,9 @@
     <script type="text/javascript">
         var myChart = echarts.init(document.getElementById('container'));
 
-        // 颜色渐变定义
-        var tariffColor = {
-            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [{offset: 0, color: '#4e79a7'}, {offset: 1, color: '#a0c4e4'}]
-        };
-        var industryColor = {
-            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [{offset: 0, color: '#f28e2b'}, {offset: 1, color: '#fcb897'}]
-        };
-        var tradeColor = {
-            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [{offset: 0, color: '#59a14f'}, {offset: 1, color: '#a4d49d'}]
-        };
-        var foreignColor = {
-            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [{offset: 0, color: '#edc948'}, {offset: 1, color: '#ffe2a3'}]
-        };
+        // 颜色定义
+        const tariffColor = '#4e79a7', industryColor = '#f28e2b';
+        const importColor = '#e15759', exportColor = '#76b7b2', totalColor = '#59a14f';
 
         // 数据集
         var data = {
@@ -34,8 +20,7 @@
             industryTariff: [14.7, 11.3, 10.3, 9.5, 9, 9],   // 工业品关税
             tradeTotal: [5097.68, 6207.68, 8512.07, 11547.92, 14221.18, 17606.86], // 进出口总值
             exportValue: [2661.55, 3255.65, 4383.71, 5933.69, 7619.99, 9690.73],  // 出口值
-            importValue: [2436.13, 2952.03, 4128.36, 5614.23, 6601.19, 7916.14],  // 进口值
-            foreignFirms: [202306, 208056, 226373, 242284, 353030, 376711]        // 外企数量
+            importValue: [2436.13, 2952.03, 4128.36, 5614.23, 6601.19, 7916.14]   // 进口值
         };
 
         option = {
@@ -55,12 +40,11 @@
                         '工业品关税：' + params[1].value + '%<br/>' +
                         '进出口总额：' + params[2].value.toFixed(2) + '亿美元<br/>' +
                         '出口总额：' + params[3].value.toFixed(2) + '亿美元<br/>' +
-                        '进口总额：' + params[4].value.toFixed(2) + '亿美元<br/>' +
-                        '外企数量：' + params[5].value + '户';
+                        '进口总额：' + params[4].value.toFixed(2) + '亿美元';
                 }
             },
             legend: {
-                data: ['关税总水平', '工业品关税', '进出口总值', '出口总值', '进口总值', '外企数量'],
+                data: ['关税总水平', '工业品关税', '进出口总值', '出口总值', '进口总值'],
                 top: 40,
                 textStyle: { fontSize: 14 }
             },
@@ -83,12 +67,13 @@
                     splitLine: { lineStyle: { type: 'dashed' } }
                 },
                 {
-                    name: '经济指标数值',
+                    name: '金额（亿美元）',
                     type: 'value',
                     min: 0,
-                    max: function(value) { return Math.ceil(value.max / 10000) * 10000; },
+                    max: 20000,
+                    interval: 5000,
                     axisLine: { lineStyle: { color: '#555' } },
-                    splitLine: { show: false }
+                    splitLine: { show: true, lineStyle: { type: 'dotted' } }
                 }
             ],
             series: [
@@ -107,30 +92,27 @@
                     lineStyle: { width: 3, shadowColor: 'rgba(255,140,0,0.5)', shadowBlur: 10 },
                     data: data.industryTariff
                 },
-                // 柱状图 - 经济数据
+                // 柱状图 - 经济数据（分组显示）
                 {
                     name: '进出口总值', type: 'bar', yAxisIndex: 1,
-                    itemStyle: { color: tradeColor },
-                    barWidth: 20,
+                    itemStyle: { color: totalColor },
+                    barWidth: 15,
+                    categoryGap: '60%',
                     data: data.tradeTotal
                 },
                 {
                     name: '出口总值', type: 'bar', yAxisIndex: 1,
-                    itemStyle: { color: '#76b7b2' },
-                    barGap: '-100%',
+                    itemStyle: { color: exportColor },
+                    barWidth: 15,
+                    categoryGap: '60%',
                     data: data.exportValue
                 },
                 {
                     name: '进口总值', type: 'bar', yAxisIndex: 1,
-                    itemStyle: { color: '#4e79a7' },
-                    barGap: '-100%',
+                    itemStyle: { color: importColor },
+                    barWidth: 15,
+                    categoryGap: '60%',
                     data: data.importValue
-                },
-                {
-                    name: '外企数量', type: 'bar', yAxisIndex: 1,
-                    itemStyle: { color: foreignColor },
-                    barWidth: 10,
-                    data: data.foreignFirms
                 }
             ],
             dataZoom: [{
