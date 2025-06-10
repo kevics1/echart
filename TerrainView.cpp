@@ -8,7 +8,7 @@
 #ifndef SHARED_HANDLERS
 #include "Terrain.h"
 #endif
-
+#include "CColorSchemeDlg.h" // 包含对话框头文件
 #include "TerrainDoc.h"
 #include "TerrainView.h"
 
@@ -73,12 +73,33 @@ typedef unsigned unsigned char uint8_t;
 #include "gdal_priv.h"
 #include <algorithm>
 
+// 初始化默认颜色的辅助函数
+void CTerrainView::InitializeDefaultColors()
+{
+	// c1: vec3(0.0, 0.0, 1.0) -> RGB(0,0,255) (纯蓝)
+	// c2: vec3(0.0, 207.0/255.0, 65.0/255.0) -> RGB(0, 207, 65) (青绿/蓝绿色)
+	// c3: vec3(144.0/255.0, 238.0/255.0, 144.0/255.0) -> RGB(144, 238, 144) (浅绿)
+	// c4: vec3(1.0, 1.0, 0.0) -> RGB(255, 255, 0) (纯黄)
+	// c5: vec3(1.0, 165.0/255.0, 0.0) -> RGB(255, 165, 0) (橙黄)
+	// c6: vec3(1.0, 69.0/255.0, 0.0) -> RGB(255, 69, 0) (橙红)
+	// c7: vec3(1.0, 0.0, 0.0) -> RGB(255, 0, 0) (纯红)
+	m_colorScheme[0] = glm::vec3(0.0f, 0.0f, 1.0f);
+	m_colorScheme[1] = glm::vec3(0.0f, 207.0f / 255.0f, 65.0f / 255.0f);
+	m_colorScheme[2] = glm::vec3(144.0f / 255.0f, 238.0f / 255.0f, 144.0f / 255.0f);
+	m_colorScheme[3] = glm::vec3(1.0f, 1.0f, 0.0f);
+	m_colorScheme[4] = glm::vec3(1.0f, 165.0f / 255.0f, 0.0f);
+	m_colorScheme[5] = glm::vec3(1.0f, 69.0f / 255.0f, 0.0f);
+	m_colorScheme[6] = glm::vec3(1.0f, 0.0f, 0.0f);
+
+	for (int i = 0; i < 7; ++i) m_colorUniformLocs[i] = -1; // 初始化为无效值
+}
 
 CTerrainView::CTerrainView() : m_hRC(NULL), m_pDC(NULL),
 m_cameraPos(0.0f, 50.0f, 50.0f), m_cameraFront(0.0f, -0.5f, -1.0f),
-m_cameraUp(0.0f, 1.0f, 0.0f), m_scale(0.01f), m_bTextureEnabled(true), m_bColoredLayer(false) // 初始化缩放比例
+m_cameraUp(0.0f, 1.0f, 0.0f), m_scale(0.03f), m_bTextureEnabled(true), m_bColoredLayer(false) // 初始化缩放比例
 {
 	m_terrainMinMax = glm::vec3(0.0f);
+	InitializeDefaultColors(); // 初始化颜色方案
 }
 
 CTerrainView::~CTerrainView()
@@ -133,7 +154,7 @@ void CTerrainView::OnDraw(CDC* /*pDC*/)
 	//设定视点和视线
 	glm::mat4 view = glm::lookAt(m_cameraPos, m_cameraPos + m_cameraFront, m_cameraUp);
 	glm::mat4 model = glm::mat4(1.0f);
-
+	glUseProgram(m_shaderProgram); // 激活着色器程序
 	// 在绑定纹理前添加激活纹理单元
 	if (m_bTextureEnabled && glIsTexture(m_textureID)) {
 		glActiveTexture(GL_TEXTURE0);
@@ -142,7 +163,6 @@ void CTerrainView::OnDraw(CDC* /*pDC*/)
 	}
 	// 设置是否使用纹理
 	glUniform1i(m_useTextureLoc, m_bTextureEnabled && glIsTexture(m_textureID) && !m_bColoredLayer);
-	glUseProgram(m_shaderProgram);
 	glUniformMatrix4fv(glGetUniformLocation(m_shaderProgram, "model"),
 		1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(glGetUniformLocation(m_shaderProgram, "view"),
@@ -156,12 +176,29 @@ void CTerrainView::OnDraw(CDC* /*pDC*/)
 	glUniform3f(glGetUniformLocation(m_shaderProgram, "terrainMinMax"),
 		m_terrainMinMax.x, m_terrainMinMax.y, m_terrainMinMax.z);
 
-	GLboolean is16Bit = (m_dataType == GDT_UInt16 || m_dataType == GDT_Int16);
+	// 更新颜色方案 uniform 变量
+	for (int i = 0; i < 7; ++i)
+	{
+		if (m_colorUniformLocs[i] != -1) // 检查 uniform 位置是否有效
+		{
+			glUniform3fv(m_colorUniformLocs[i], 1, glm::value_ptr(m_colorScheme[i]));
+		}
+	}
+
+	//GLboolean is16Bit = (m_dataType == GDT_UInt16 || m_dataType == GDT_Int16);
 	//	glUniform1i(m_is16BitLoc, is16Bit);
 
-	glBindTexture(GL_TEXTURE_2D, m_textureID);
+	if (m_bTextureEnabled && glIsTexture(m_textureID) && !m_bColoredLayer) {
+		glActiveTexture(GL_TEXTURE0); // 确保正确的纹理单元
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+	}
+	else if (!m_bColoredLayer) { // 无纹理模式 (线框/灰色)
+		glBindTexture(GL_TEXTURE_2D, 0); // 解绑纹理
+	}
+
 	glBindVertexArray(m_terrainVAO);
 	glDrawArrays(GL_TRIANGLES, 0, m_vertices.size() / 5);
+	glBindVertexArray(0);
 
 	if (!m_vertices.empty() && !glIsTexture(m_textureID)) {
 		glDisable(GL_POLYGON_OFFSET_FILL);
@@ -273,7 +310,10 @@ int CTerrainView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_hRC = wglCreateContext(m_pDC->GetSafeHdc());
 	wglMakeCurrent(m_pDC->GetSafeHdc(), m_hRC);
 
-	gladLoadGL();
+	if (!gladLoadGL()) { // 初始化 GLAD
+		AfxMessageBox(_T("初始化 GLAD 失败"));
+		return -1;
+	}
 
 	// 顶点着色器（确保位置和纹理坐标匹配）
 	// 修改后的顶点着色器
@@ -320,28 +360,33 @@ int CTerrainView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     uniform usampler2D texture16Bit;  // 16位无符号整数纹理
     uniform bool is16Bit;
 
+    // 颜色方案 uniform 变量
+    uniform vec3 u_color1;
+    uniform vec3 u_color2;
+    uniform vec3 u_color3;
+    uniform vec3 u_color4;
+    uniform vec3 u_color5;
+    uniform vec3 u_color6;
+    uniform vec3 u_color7;
+
 	// 分层设色函数
 	vec4 getColorByHeight(float height) {
-		// 将缩放后的高度还原为实际高度（单位：米）
-		float actualHeight = height;
+        // `height` 参数是已缩放的高度。
+        // 原始着色器中，`vHeight` 是 `aPos.y`（已由 CPU 端的 `m_scale` 缩放）。
+        // 然后调用 `getColorByHeight(vHeight / heightScale)`。
+        // 如果 `heightScale` (uniform) == `m_scale` (CPU)，则 `vHeight / heightScale` 是未缩放的原始 DEM 高度。
+        // 这似乎是预期的行为。所以 `actualHeight` 将是原始 DEM 高度。
+		float actualHeight = height; 
     
-		// 定义关键高度点
-		const float h1 = -4.0;
-		const float h2 = 250.0;
-		const float h3 = 500.0;
-		const float h4 = 750.0;
-		const float h5 = 1000.0;
-		const float h6 = 1250.0;
+		// 定义关键高度点 (这些是固定的，颜色是动态的)
+		const float h1 = -4.0; const float h2 = 250.0; const float h3 = 500.0;
+		const float h4 = 750.0; const float h5 = 1000.0; const float h6 = 1250.0;
 		const float h7 = 1466.0;
     
-		// 定义关键颜色点
-		vec3 c1 = vec3(0.0, 0.0, 1.0);        // 纯蓝
-		vec3 c2 = vec3(0.0, 207.0/255.0, 65.0/255/0);        // 青绿
-		vec3 c3 = vec3(144.0/255.0, 238.0/255.0, 144.0/255.0); // 浅绿
-		vec3 c4 = vec3(1.0, 1.0, 0.0);        // 纯黄
-		vec3 c5 = vec3(1.0, 165.0/255.0, 0.0); // 橙黄
-		vec3 c6 = vec3(1.0, 69.0/255.0, 0.0);  // 橙红
-		vec3 c7 = vec3(1.0, 0.0, 0.0);        // 纯红
+		// 使用 uniform 颜色
+		vec3 c1 = u_color1; vec3 c2 = u_color2; vec3 c3 = u_color3;
+		vec3 c4 = u_color4; vec3 c5 = u_color5; vec3 c6 = u_color6;
+		vec3 c7 = u_color7;
     
 		// 计算渐变颜色
 		vec3 color;
@@ -409,37 +454,72 @@ int CTerrainView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	glAttachShader(m_shaderProgram, fragmentShader);
 	glLinkProgram(m_shaderProgram);
 
+	// 检查链接状态
+	GLint success;
+	glGetProgramiv(m_shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		char infoLog[512];
+		glGetProgramInfoLog(m_shaderProgram, 512, NULL, infoLog);
+		CString msg;
+		msg.Format(_T("着色器程序链接错误:\n%hs"), infoLog);
+		AfxMessageBox(msg);
+		glDeleteShader(vertexShader);
+		glDeleteShader(fragmentShader);
+		glDeleteProgram(m_shaderProgram);
+		m_shaderProgram = 0; // 标记为无效
+		return -1;
+	}
+
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	// 在初始化时设置纹理单元
-	glUseProgram(m_shaderProgram);
-	// 在OnCreate函数中获取Uniform位置
+	glUseProgram(m_shaderProgram); // 在获取 uniform 位置之前使用程序
 
 	// 获取新增的uniform位置
 	m_coloredLayerLoc = glGetUniformLocation(m_shaderProgram, "coloredLayer");
 	m_heightScaleLoc = glGetUniformLocation(m_shaderProgram, "heightScale");
-	glUniform1i(glGetUniformLocation(m_shaderProgram, "terrainMinMax"), 2);
+	// glUniform1i(glGetUniformLocation(m_shaderProgram, "terrainMinMax"), 2); // 这似乎不正确，terrainMinMax 是一个 vec3
+	// terrainMinMax 的 uniform 已在 OnDraw 中获取和设置。
 
-	//考虑到将在影像读取阶段将16位的转换成8位，因此不需要考虑opengl对16位的支持，下面内容要进行调整
-//	m_is16BitLoc = glGetUniformLocation(m_shaderProgram, "is16Bit");
+	// m_is16BitLoc = glGetUniformLocation(m_shaderProgram, "is16Bit"); // 此行已注释掉
+	// glUniform1i(glGetUniformLocation(m_shaderProgram, "texture1"), 0); // "texture1" 可能是 "texture8Bit" 或 "texture16Bit"
+	glUniform1i(glGetUniformLocation(m_shaderProgram, "texture8Bit"), 0); // 假设纹理单元 0 用于 8 位纹理
+	glUniform1i(glGetUniformLocation(m_shaderProgram, "texture16Bit"), 0); // 如果一次只使用一个，则也为单元 0；如果同时使用，则为不同单元。
+	// 着色器逻辑暗示仅根据 is16Bit 对一个（texture8Bit 或 texture16Bit）进行采样。
 
-	glUniform1i(glGetUniformLocation(m_shaderProgram, "texture1"), 0);
-	//GLboolean is16Bit = (m_dataType == GDT_UInt16 || m_dataType == GDT_Int16);
-	//glUniform1i(m_is16BitLoc, is16Bit);
+	m_useTextureLoc = glGetUniformLocation(m_shaderProgram, "useTexture");
 
-	// 绑定纹理单元
-	glUniform1i(glGetUniformLocation(m_shaderProgram, "texture8Bit"), 0);
-	glUniform1i(glGetUniformLocation(m_shaderProgram, "texture16Bit"), 0);
-	//glUniform1i(glGetUniformLocation(m_shaderProgram, "is16Bit"),(m_dataType == GDT_UInt16));
-	//获取useTexture的uniform位置
-    m_useTextureLoc = glGetUniformLocation(m_shaderProgram, "useTexture");
-	// 确保VAO配置正确
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	// 获取颜色方案的 uniform 位置
+	const char* colorUniformNames[] = {
+		"u_color1", "u_color2", "u_color3", "u_color4",
+		"u_color5", "u_color6", "u_color7"
+	};
+	for (int i = 0; i < 7; ++i) {
+		m_colorUniformLocs[i] = glGetUniformLocation(m_shaderProgram, colorUniformNames[i]);
+		if (m_colorUniformLocs[i] == -1) { // 检查 uniform 是否找到
+			CString msg;
+			msg.Format(_T("警告: 在着色器中未找到 Uniform %hs。"), colorUniformNames[i]);
+			OutputDebugString(msg + _T("\n")); // 输出到调试窗口
+		}
+	}
 
-	m_cameraPos = glm::vec3(0.0f, m_terrainHeight * 0.2f, m_terrainWidth * 0.3f);//相机(视点)位置
-	m_cameraFront = glm::normalize(glm::vec3(0.0f, -0.5f, -1.0f));//实现前方位置
+	// VAO 设置 (确保在 m_shaderProgram 链接并使用之后)
+	// 此设置通常在加载缓冲区数据之后或 VAO 持久存在时完成。
+	// 如果在此处创建 m_terrainVAO，则应在这些调用之前绑定它。
+	// 但是，LoadDEM 会重新创建 m_terrainVAO，因此这可能是多余的或放错了位置。
+	// 让我们假设 LoadDEM 使用属性指针正确处理 VAO 设置。
+	// 原始代码在此处有这些调用，然后 LoadDEM 也设置了它们。
+	// 如果尚未创建或绑定 m_terrainVAO，则可以。
+	// glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	// glEnableVertexAttribArray(0); // 在 VAO 绑定并且 VBO 有数据后启用
+	// glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	// glEnableVertexAttribArray(1);
+
+
+	// 如果可用，则根据某些默认地形尺寸初始化相机，或稍后设置
+	// m_cameraPos = glm::vec3(0.0f, m_terrainHeight * 0.2f, m_terrainWidth * 0.3f); // m_terrainHeight/Width 在此处可能为 0
+	// m_cameraFront = glm::normalize(glm::vec3(0.0f, -0.5f, -1.0f));
+	// 这些最好在 LoadDEM 之后，当尺寸已知时设置。
 
 	// 检查OpenGL版本
 	const GLubyte* version = glGetString(GL_VERSION);
@@ -1097,5 +1177,29 @@ void CTerrainView::OnLayerColored()
 
 void CTerrainView::OnColorSchemes()
 {
-	// TODO: 在此添加命令处理程序代码
+	// 将当前的 glm::vec3 颜色转换为 COLORREF 给对话框
+	COLORREF currentDialogColors[7];
+	for (int i = 0; i < 7; ++i)
+	{
+		currentDialogColors[i] = RGB(
+			static_cast<BYTE>(m_colorScheme[i].r * 255.0f),
+			static_cast<BYTE>(m_colorScheme[i].g * 255.0f),
+			static_cast<BYTE>(m_colorScheme[i].b * 255.0f)
+		);
+	}
+
+	CColorSchemeDlg dlg(currentDialogColors, this); // 将当前颜色传递给对话框
+	if (dlg.DoModal() == IDOK)
+	{
+		// 如果用户点击“确定”，则更新颜色方案
+		for (int i = 0; i < 7; ++i)
+		{
+			m_colorScheme[i] = glm::vec3(
+				GetRValue(dlg.m_selectedColors[i]) / 255.0f,
+				GetGValue(dlg.m_selectedColors[i]) / 255.0f,
+				GetBValue(dlg.m_selectedColors[i]) / 255.0f
+			);
+		}
+		Invalidate(TRUE); // 触发重绘以应用新颜色
+	}
 }
