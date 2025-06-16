@@ -1,0 +1,91 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenLayers地图控件示例</title>
+    <link rel="stylesheet" href="v6.5.0-dist/ol.css">
+    <script src="v6.5.0-dist/ol.js"></script>
+    <style>
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        .ol-scale-line {
+            background: rgba(0,60,136,.7);
+            border-radius: 4px;
+            bottom: 8px;
+            left: 8px;
+            padding: 2px;
+            position: absolute;
+        }
+        .ol-mouse-position {
+            top: 8px;
+            right: 8px;
+            position: absolute;
+            background-color: rgba(255,255,255,0.7);
+            padding: 4px;
+            border-radius: 4px;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    // 创建天地图底图
+    const map = new ol.Map({
+        target: 'map',
+        layers: [
+            new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: 'http://t0.tianditu.gov.cn/vec_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=e6f5d943664eb7ecd76917f4232da8f7',
+                    attributions: '天地图'
+                })
+            })
+        ],
+        view: new ol.View({
+            center: ol.proj.fromLonLat([114.355, 30.537]),
+            zoom: 15
+        }),
+        // 添加地图控件
+        controls: ol.control.defaults().extend([
+            new ol.control.ScaleLine(), // 比例尺控件
+            new ol.control.MousePosition({ // 鼠标位置控件
+                coordinateFormat: ol.coordinate.createStringXY(6),
+                projection: 'EPSG:4326',
+                className: 'custom-mouse-position',
+                target: document.getElementById('mouse-position'),
+                undefinedHTML: '&nbsp;'
+            })
+        ])
+    });
+
+    // 添加鹰眼地图控件
+    const overviewMapControl = new ol.control.OverviewMap({
+        layers: [
+            new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: 'http://t0.tianditu.gov.cn/vec_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=e6f5d943664eb7ecd76917f4232da8f7'
+                })
+            })
+        ],
+        collapsed: false // 默认不折叠
+    });
+    map.addControl(overviewMapControl);
+
+    // 添加WMS图层
+    var wmsSource = new ol.source.TileWMS({
+        url: 'http://localhost:8080/geoserver/wuhan/wms',
+        params: {
+            'LAYERS': 'wuhan:building',
+            'TILED': true
+        },
+        serverType: 'geoserver',
+    });
+    var wmsLayer = new ol.layer.Tile({
+        source: wmsSource,
+    });
+    map.addLayer(wmsLayer);
+</script>
+</body>
+</html>
