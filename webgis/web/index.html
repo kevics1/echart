@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>WebGIS 属性查询</title>
+    <!-- 引入 OpenLayers CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.1.0/ol.css">
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; }
+        #map { width: 100%; height: calc(100% - 80px); } /* Adjust height as needed */
+        .query-panel {
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .query-panel input[type="text"] {
+            padding: 8px;
+            width: 250px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        .query-panel button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .query-panel button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="query-panel">
+    <h3>属性查询 (建筑名称)</h3>
+    <input type="text" id="buildingNameInput" placeholder="输入建筑名称进行模糊搜索">
+    <button onclick="queryBuildingByName()">查询</button>
+</div>
+
+<div id="map"></div>
+
+<!-- 引入 OpenLayers JS -->
+<script src="https://cdn.jsdelivr.net/npm/ol@v9.1.0/dist/ol.js"></script>
+<script>
+    let map;
+    let highlightLayer; // 用于显示查询结果的图层
+
+    // 初始化地图 (这是一个示例，您需要根据您的现有代码调整)
+    function initMap() {
+        map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM() // OpenStreetMap 底图示例
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([114.3055, 30.5928], 'EPSG:3857'), // 武汉市中心经纬度示例 (需转为3857)
+                zoom: 12, // 初始缩放级别
+                projection: 'EPSG:3857'
+            })
+        });
+
+        // 初始化高亮图层
+        initHighlightLayer();
+    }
+
+    // 初始化高亮图层 (用于显示查询结果的标记)
+    function initHighlightLayer() {
+        if (!map) {
+            console.error("地图对象 'map' 未初始化!");
+            return;
+        }
+        if (highlightLayer) {
+            map.removeLayer(highlightLayer);
+        }
+        highlightLayer = new ol.layer.Vector({
+            source: new ol.source.Vector(),
+            style: function(feature) { // 动态设置样式以显示名称
+                return new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 8,
+                        fill: new ol.style.Fill({color: 'rgba(255, 0, 0, 0.6)'}),
+                        stroke: new ol.style.Stroke({color: 'red', width: 2})
+                    }),
+                    text: new ol.style.Text({
+                        text: feature.get('name'), // 获取要素的name属性
+                        font: '12px Calibri,sans-serif',
+                        fill: new ol.style.Fill({ color: '#000' }),
+                        stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
+                        offsetY: -15, // 文本偏移量
+                        overflow: true // 允许文本溢出
+                    })
+                });
+            }
+        });
+        map.addLayer(highlightLayer);
+    }
+
+    // 执行属性查询
+    async function queryBuildingByName() {
+        const buildingName = document.getElementById('buildingNameInput').value;
+        if (!buildingName.trim()) {
+            alert("请输入要查询的建筑名称!");
+            return;
+        }
+
+        if (!highlightLayer) {
+            initHighlightLayer(); // 确保图层已初始化
+        } else {
+            highlightLayer.getSource().clear(); // 清除上一次的查询结果
+        }
+
+        try {
+            // Servlet的URL映射为'/query' (或您在web.xml中配置的路径)
+            // encodeURIComponent确保特殊字符被正确编码 (通常为UTF-8)
+            const response = await fetch(`query?name=${encodeURIComponent(buildingName)}`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`查询失败! 状态: ${response.status}, 信息: ${errorText}`);
+            }
+            const results = await response.json();
+
+            if (results.length === 0) {
+                alert("未找到匹配的建筑。");
+                return;
+            }
+
+            const features = [];
+            const geojsonFormat = new ol.format.GeoJSON(); // 默认dataProjection为EPSG:4326, featureProjection为地图视图投影
+
+            results.forEach(building => {
+                if (building.geometry) { // building.geometry 是 GeoJSON 字符串
+                    try {
+                        const geometryObject = JSON.parse(building.geometry); // 将GeoJSON字符串解析为对象
+                        const feature = geojsonFormat.readFeature(geometryObject, {
+                            dataProjection: 'EPSG:3857',    // GeoJSON数据源的坐标系
+                            featureProjection: 'EPSG:3857' // 地图视图的坐标系 (与map.getView().getProjection()一致)
+                        });
+                        feature.set('name', building.name); // 设置要素属性，用于显示名称等
+                        features.push(feature);
+                    } catch(e) {
+                        console.error("解析GeoJSON失败:", building.geometry, e);
+                    }
+                }
+            });
+
+            if (features.length > 0) {
+                highlightLayer.getSource().addFeatures(features);
+                // 缩放到查询结果的范围
+                const extent = highlightLayer.getSource().getExtent();
+                map.getView().fit(extent, {
+                    padding: [80, 80, 80, 80], // 边界留白
+                    duration: 1000, // 动画时长
+                    maxZoom: 18 // 最大缩放级别
+                });
+            } else if (results.length > 0) {
+                alert("查询到数据，但部分或全部数据缺少有效的地理信息，无法在地图上标记。");
+            }
+
+        } catch (error) {
+            console.error("查询过程中发生错误:", error);
+            alert(`查询失败: ${error.message}`);
+        }
+    }
+
+    // 页面加载完成后初始化地图
+    document.addEventListener('DOMContentLoaded', initMap);
+</script>
+
+</body>
+</html>
