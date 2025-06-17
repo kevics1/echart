@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,65 +28,494 @@
             font-family: 'Arial', sans-serif;
             font-size: 12px;
         }
+
+        /* 天气组件样式 */
+        .weather-widget {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background-color: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 180px;
+        }
+
+        /* 底图切换组件样式 - 移到左侧正中间 */
+        .basemap-switcher {
+            position: absolute;
+            top: 50%;
+            left: 8px;
+            transform: translateY(-50%);
+            background-color: rgba(255,255,255,0.9);
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .basemap-switcher label {
+            display: block;
+            margin: 4px 0;
+            cursor: pointer;
+        }
+
+        /* 图层控制组件样式 - 移到右上角边距20px */
+        .layer-control {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 200px;
+        }
+
+        .layer-control h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+
+        .layer-control label {
+            display: block;
+            margin: 4px 0;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        /* 高亮选中的图层标签 */
+        .layer-control label.selected {
+            background-color: #007acc;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0, 122, 204, 0.3);
+            font-weight: bold;
+        }
+
+        /* 勾选状态的Mark标记 */
+        .layer-control label.selected::after {
+            content: "★";
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #ffeb3b;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .layer-control input[type="checkbox"] {
+            margin-right: 6px;
+        }
+
+        /* 隐藏默认复选框，使用自定义样式 */
+        .layer-control input[type="checkbox"] {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ccc;
+            border-radius: 3px;
+            margin-right: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .layer-control input[type="checkbox"]:checked {
+            background-color: #007acc;
+            border-color: #007acc;
+        }
+
+        .layer-control input[type="checkbox"]:checked::after {
+            content: "✓";
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .mark-tip {
+            color: #666;
+            font-size: 10px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #eee;
+        }
+
+        /* 简单的地图高亮提示样式 */
+        .highlight-info {
+            position: absolute;
+            bottom: 60px;
+            left: 8px;
+            background-color: rgba(255, 193, 7, 0.9);
+            color: #333;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 1px solid #ffc107;
+        }
     </style>
 </head>
 <body>
 <div id="map"></div>
+
+<!-- 天气组件 -->
+<div class="weather-widget" id="weather-widget">
+    <div>加载天气信息中...</div>
+</div>
+
+<!-- 底图切换组件 -->
+<div class="basemap-switcher">
+    <strong>底图切换</strong>
+    <label><input type="radio" name="basemap" value="vec" checked> 矢量图</label>
+    <label><input type="radio" name="basemap" value="img"> 遥感影像</label>
+    <label><input type="radio" name="basemap" value="ter"> 晕渲图</label>
+</div>
+
+<!-- 图层控制组件 -->
+<div class="layer-control">
+    <h4>图层控制</h4>
+    <label><input type="checkbox" data-layer="tsg"> 图书馆</label>
+    <label><input type="checkbox" data-layer="yy"> 医院</label>
+    <label><input type="checkbox" data-layer="xm"> 校门</label>
+    <label><input type="checkbox" data-layer="xsss"> 学生宿舍</label>
+    <label><input type="checkbox" data-layer="jx"> 教学办公科研设施</label>
+    <label><input type="checkbox" data-layer="jgss"> 教工宿舍</label>
+    <label><input type="checkbox" data-layer="wt"> 文体娱乐设施</label>
+    <label><input type="checkbox" data-layer="sh"> 生活服务设施</label>
+    <label><input type="checkbox" data-layer="zh"> 综合商业设施</label>
+    <label><input type="checkbox" data-layer="hsjz"> 校外灰色建筑</label>
+    <div class="mark-tip">* 勾选图层将单独显示，其他可控图层将隐藏<br>* 点击地图要素显示标记</div>
+</div>
+
+<!-- 简单的地图高亮提示 -->
+<div class="highlight-info" id="highlight-info" style="display: none;">
+    高亮显示: <span id="highlight-layer-name"></span>
+</div>
+
 <script>
-    // 创建天地图底图
+    // 天地图密钥
+    const TIANDITU_KEY = 'e6f5d943664eb7ecd76917f4232da8f7';
+
+    // 创建不同类型的天地图底图源
+    const basemapSources = {
+        vec: new ol.source.XYZ({
+            url: `http://t0.tianditu.gov.cn/vec_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${TIANDITU_KEY}`,
+            attributions: '天地图'
+        }),
+        img: new ol.source.XYZ({
+            url: `http://t0.tianditu.gov.cn/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${TIANDITU_KEY}`,
+            attributions: '天地图'
+        }),
+        ter: new ol.source.XYZ({
+            url: `http://t0.tianditu.gov.cn/ter_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=ter&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${TIANDITU_KEY}`,
+            attributions: '天地图'
+        })
+    };
+
+    // 创建底图图层
+    const basemapLayer = new ol.layer.Tile({
+        source: basemapSources.vec
+    });
+
+    // 定义图层配置（按显示顺序，从底层到顶层）
+    const layerConfigs = [
+        { name: 'bj', label: '边界', controllable: false },
+        { name: 'ljs', label: '珞珈山', controllable: false },
+        { name: 'ld', label: '绿地', controllable: false },
+        { name: 'xwdl2', label: '校外道路2', controllable: false },
+        { name: 'xwdl1', label: '校外道路1', controllable: false },
+        { name: 'xndl', label: '校内道路', controllable: false },
+        { name: 'hsjz', label: '校外灰色建筑', controllable: true },
+        { name: 'hp', label: '校内湖泊', controllable: false },
+        { name: 'zh', label: '综合商业设施', controllable: true },
+        { name: 'sh', label: '生活服务设施', controllable: true },
+        { name: 'wt', label: '文体娱乐设施', controllable: true },
+        { name: 'jgss', label: '教工宿舍', controllable: true },
+        { name: 'jx', label: '教学、办公、科研设施', controllable: true },
+        { name: 'ydc', label: '运动场', controllable: false },
+        { name: 'zqq', label: '足球场', controllable: false },
+        { name: 'xsss', label: '学生宿舍', controllable: true },
+        { name: 'qtjz', label: '其他建筑', controllable: false },
+        { name: 'xm', label: '校门', controllable: true },
+        { name: 'yy', label: '医院', controllable: true },
+        { name: 'tsg', label: '图书馆', controllable: true }
+    ];
+
+    // 创建图层名称映射
+    const layerNameMap = {
+        'tsg': '图书馆',
+        'yy': '医院',
+        'xm': '校门',
+        'xsss': '学生宿舍',
+        'jx': '教学办公科研设施',
+        'jgss': '教工宿舍',
+        'wt': '文体娱乐设施',
+        'sh': '生活服务设施',
+        'zh': '综合商业设施',
+        'hsjz': '校外灰色建筑'
+    };
+
+    const wmsLayers = {};
+    layerConfigs.forEach(config => {
+        const wmsSource = new ol.source.TileWMS({
+            url: 'http://localhost:8080/geoserver/wuhan/wms',
+            params: {
+                'LAYERS': `wuhan:${config.name}`,
+                'STYLES': `wuhan:${config.name}`,
+                'TILED': true
+            },
+            serverType: 'geoserver',
+            projection: 'EPSG:3857',
+        });
+
+        const wmsLayer = new ol.layer.Tile({
+            source: wmsSource,
+            visible: true,
+            opacity: 1.0  // 设置100%不透明
+        });
+
+        wmsLayers[config.name] = wmsLayer;
+    });
+
+    // 创建简单的高亮图层（仅仅是加个边框效果）
+    const highlightLayers = {};
+    layerConfigs.forEach(config => {
+        if (config.controllable) {
+            const highlightSource = new ol.source.TileWMS({
+                url: 'http://localhost:8080/geoserver/wuhan/wms',
+                params: {
+                    'LAYERS': `wuhan:${config.name}`,
+                    'STYLES': '', // 可以在geoserver中设置一个高亮样式
+                    'TILED': true
+                },
+                serverType: 'geoserver',
+                projection: 'EPSG:3857',
+            });
+
+            const highlightLayer = new ol.layer.Tile({
+                source: highlightSource,
+                visible: false,
+                opacity: 0.8
+            });
+
+            highlightLayers[config.name] = highlightLayer;
+        }
+    });
+
+    // 创建标记图层（用于显示点击的要素标记）
+    const markSource = new ol.source.Vector();
+    const markLayer = new ol.layer.Vector({
+        source: markSource,
+        style: new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 8,
+                fill: new ol.style.Fill({
+                    color: '#ff0000'
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#ffffff',
+                    width: 2
+                })
+            })
+        })
+    });
+
+    // 创建地图
     const map = new ol.Map({
         target: 'map',
         layers: [
-            new ol.layer.Tile({
-                source: new ol.source.XYZ({
-                    url: 'http://t0.tianditu.gov.cn/vec_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=e6f5d943664eb7ecd76917f4232da8f7',
-                    attributions: '天地图'
-                })
-            })
+            basemapLayer,
+            ...Object.values(wmsLayers),
+            ...Object.values(highlightLayers),
+            markLayer  // 添加标记图层
         ],
         view: new ol.View({
             center: ol.proj.fromLonLat([114.355, 30.537]),
             zoom: 15
         }),
-        // 添加地图控件
         controls: ol.control.defaults().extend([
-            new ol.control.ScaleLine(), // 比例尺控件
-            new ol.control.MousePosition({ // 鼠标位置控件
+            new ol.control.ScaleLine(),
+            new ol.control.MousePosition({
                 coordinateFormat: ol.coordinate.createStringXY(6),
-                projection: 'EPSG:4326',
+                projection: 'EPSG:3857',
                 className: 'custom-mouse-position',
-                target: document.getElementById('mouse-position'),
                 undefinedHTML: '&nbsp;'
             })
         ])
+    });
+
+    // 添加地图点击事件
+    map.on('singleclick', function(evt) {
+        const coordinate = evt.coordinate;
+        const pixel = evt.pixel;
+
+        // 清除之前的标记
+        markSource.clear();
+
+        // 获取点击位置的要素信息
+        map.forEachLayerAtPixel(pixel, function(layer, pixel) {
+            if (layer instanceof ol.layer.Tile && layer.getSource() instanceof ol.source.TileWMS) {
+                // 创建标记点
+                const markFeature = new ol.Feature({
+                    geometry: new ol.geom.Point(coordinate)
+                });
+
+                // 添加标记到图层
+                markSource.addFeature(markFeature);
+
+                console.log('点击位置:', ol.proj.toLonLat(coordinate));
+                console.log('点击的图层:', layer.getSource().getParams()['LAYERS']);
+
+                return true; // 只处理第一个图层
+            }
+        });
     });
 
     // 添加鹰眼地图控件
     const overviewMapControl = new ol.control.OverviewMap({
         layers: [
             new ol.layer.Tile({
-                source: new ol.source.XYZ({
-                    url: 'http://t0.tianditu.gov.cn/vec_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=e6f5d943664eb7ecd76917f4232da8f7'
-                })
+                source: basemapSources.vec
             })
         ],
-        collapsed: false // 默认不折叠
+        collapsed: false
     });
     map.addControl(overviewMapControl);
 
-    // 添加WMS图层
-    var wmsSource = new ol.source.TileWMS({
-        url: 'http://localhost:8080/geoserver/wuhan/wms',
-        params: {
-            'LAYERS': 'wuhan:building',
-            'TILED': true
-        },
-        serverType: 'geoserver',
+    // 底图切换功能
+    document.querySelectorAll('input[name="basemap"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                basemapLayer.setSource(basemapSources[this.value]);
+            }
+        });
     });
-    var wmsLayer = new ol.layer.Tile({
-        source: wmsSource,
+
+    // 图层控制功能 - 简化的高亮提示
+    const controllableLayers = layerConfigs.filter(config => config.controllable).map(config => config.name);
+
+    document.querySelectorAll('.layer-control input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const layerName = this.getAttribute('data-layer');
+            const label = this.parentElement;
+            const selectedLayerName = document.getElementById('selected-layer-name');
+            const highlightInfo = document.getElementById('highlight-info');
+            const highlightLayerName = document.getElementById('highlight-layer-name');
+
+            if (this.checked) {
+                // 如果勾选了某个图层，隐藏其他可控图层，只显示当前图层
+                controllableLayers.forEach(name => {
+                    if (wmsLayers[name]) {
+                        wmsLayers[name].setVisible(name === layerName);
+                    }
+                    // 隐藏所有高亮图层
+                    if (highlightLayers[name]) {
+                        highlightLayers[name].setVisible(false);
+                    }
+                });
+
+                // 显示选中图层的高亮效果（简单的边框或轮廓）
+                if (highlightLayers[layerName]) {
+                    highlightLayers[layerName].setVisible(true);
+                }
+
+                // 移除其他标签的高亮样式并取消其他复选框的选中状态
+                document.querySelectorAll('.layer-control label').forEach(lbl => {
+                    lbl.classList.remove('selected');
+                });
+                document.querySelectorAll('.layer-control input[type="checkbox"]').forEach(cb => {
+                    if (cb !== this) {
+                        cb.checked = false;
+                    }
+                });
+
+                // 添加当前标签的高亮样式
+                label.classList.add('selected');
+
+                // 显示选中图层信息
+                selectedLayerName.textContent = layerNameMap[layerName];
+                selectedInfo.style.display = 'block';
+
+                // 显示地图高亮提示
+                highlightLayerName.textContent = layerNameMap[layerName];
+                highlightInfo.style.display = 'block';
+
+            } else {
+                // 如果取消勾选，恢复所有可控图层的显示
+                controllableLayers.forEach(name => {
+                    if (wmsLayers[name]) {
+                        wmsLayers[name].setVisible(true);
+                    }
+                    // 隐藏所有高亮图层
+                    if (highlightLayers[name]) {
+                        highlightLayers[name].setVisible(false);
+                    }
+                });
+
+                // 移除高亮样式
+                label.classList.remove('selected');
+
+                // 隐藏选中图层信息
+                selectedInfo.style.display = 'none';
+
+                // 隐藏地图高亮提示
+                highlightInfo.style.display = 'none';
+            }
+
+            // 清除标记
+            markSource.clear();
+        });
     });
-    map.addLayer(wmsLayer);
+
+    // 天气API功能
+    function loadWeather() {
+        const apiKey = '521f20a270a884b010493dcd958e21e4';
+        const city = '武汉';
+        const url = `https://restapi.amap.com/v3/weather/weatherInfo?city=${encodeURIComponent(city)}&key=${apiKey}&extensions=base`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === '1' && data.lives && data.lives.length > 0) {
+                    const weather = data.lives[0];
+                    const weatherHtml = `
+                            <div><strong>${weather.city}</strong></div>
+                            <div>天气：${weather.weather}</div>
+                            <div>温度：${weather.temperature}°C</div>
+                            <div>风向：${weather.winddirection}</div>
+                            <div>风力：${weather.windpower}级</div>
+                            <div>湿度：${weather.humidity}%</div>
+                        `;
+                    document.getElementById('weather-widget').innerHTML = weatherHtml;
+                } else {
+                    document.getElementById('weather-widget').innerHTML = '<div>天气信息加载失败</div>';
+                }
+            })
+            .catch(error => {
+                console.error('天气API请求失败:', error);
+                document.getElementById('weather-widget').innerHTML = '<div>天气信息加载失败</div>';
+            });
+    }
+
+    // 页面加载完成后获取天气信息
+    loadWeather();
+
+    // 每30分钟更新一次天气信息
+    setInterval(loadWeather, 30 * 60 * 1000);
 </script>
 </body>
 </html>
